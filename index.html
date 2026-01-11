@@ -1,0 +1,84 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Product CRUD (No Express)</title>
+</head>
+<body>
+  <h1>Product CRUD</h1>
+  <form id="product-form">
+    <input type="hidden" id="product-id">
+    <input type="text" id="name" placeholder="Name" required>
+    <input type="number" id="price" placeholder="Price" required>
+    <input type="text" id="description" placeholder="Description" required>
+    <button type="submit">Save</button>
+  </form>
+  <ul id="product-list"></ul>
+
+  <script>
+    const form = document.getElementById('product-form');
+    const list = document.getElementById('product-list');
+    const idField = document.getElementById('product-id');
+
+    async function loadProducts() {
+      const res = await fetch('/products');
+      const products = await res.json();
+      list.innerHTML = '';
+      products.forEach(product => {
+        const li = document.createElement('li');
+        li.innerHTML = `${product.name} - ₹${product.price} 
+          <button onclick="editProduct('${product._id}', '${product.name}', ${product.price}, '${product.description}')">Edit</button>
+          <button onclick="deleteProduct('${product._id}')">Delete</button>`;
+        list.appendChild(li);
+      });
+    }
+
+    form.onsubmit = async e => {
+      e.preventDefault();
+      const product = {
+        name: form.name.value,
+        price: form.price.value,
+        description: form.description.value
+      };
+
+      const id = idField.value;
+      if (id) {
+        await fetch(`/products/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(product)
+        });
+      } else {
+        await fetch('/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(product)
+        });
+      }
+      form.reset();
+      idField.value = '';
+      loadProducts();
+    };
+
+    function editProduct(id, name, price, description) {
+      idField.value = id;
+      form.name.value = name;
+      form.price.value = price;
+      form.description.value = description;
+    }
+
+    async function deleteProduct(id) {
+      await fetch(`/products/${id}`, { method: 'DELETE' });
+      loadProducts();
+    }
+
+    loadProducts();
+  </script>
+
+
+
+<!-- Set-ExecutionPolicy RemoteSigned –Scope Process -->
+
+</body>
+</html>
